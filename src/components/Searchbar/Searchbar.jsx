@@ -31,8 +31,8 @@ export class Searchbar extends Component {
 
   render() {
     return (
-      <header className={css.searchbar}>
-        <form className={css.searchForm} onSubmit={this.handleSubmit}>
+      <header className={css.Searchbar}>
+        <form className={css.SearchForm} onSubmit={this.handleSubmit}>
           <button type="submit" className={css.SearchFormButton}>
             <span>
               <ImSearch />
@@ -40,7 +40,7 @@ export class Searchbar extends Component {
           </button>
 
           <input
-            className={css.searchFormInput}
+            className={css.SearchFormInput}
             type="text"
             autoComplete="off"
             autoFocus
