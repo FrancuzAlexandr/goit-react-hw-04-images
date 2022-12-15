@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 
 import { PixabayApiGallery } from '../API/Pixabay.api';
 import { Searchbar } from './Searchbar/Searchbar';
@@ -17,127 +17,110 @@ const Status = {
   REJECTED: 'rejected',
 };
 
-export class App extends Component {
-  state = {
-    searchName: '',
-    imageGallery: [],
-    page: 1,
-    perPage: 12,
-    totalImages: 0,
-    error: null,
-    status: Status.IDLE,
-    largeImg: '',
-    largeImgAlt: '',
-  };
+export const App = () => {
+  const perPage = 12;
+  const [searchName, setSearchName] = useState('');
+  const [imageGallery, setImageGallery] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalImages, setTotalImages] = useState(0);
+  const [error, setError] = useState(null);
+  const [status, setStatus] = useState(Status.IDLE);
+  const [largeImg, setLargeImg] = useState('');
+  const [largeImgAlt, setLargeImgAlt] = useState('');
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { searchName, imageGallery, page, perPage } = this.state;
+  useEffect(() => {
+    if (!searchName) {
+      return;
+    }
 
-    if (prevState.searchName !== searchName || prevState.page !== page) {
-      this.setState({ status: Status.PENDING });
+    setStatus(Status.PENDING);
+    fetch();
+  }, [searchName, page]);
 
-      try {
-        const response = await pixabayApiGallery.getResponse(
-          searchName,
-          page,
-          perPage
+  async function fetch() {
+    try {
+      const response = await pixabayApiGallery.getResponse(
+        searchName,
+        page,
+        perPage
+      );
+
+      const { total, hits } = response.data;
+
+      if (total === 0) {
+        setStatus(Status.IDLE);
+        alert(
+          `There are nothing for "${searchName}". Try again with another name`
         );
-
-        const { total, hits } = response.data;
-
-        if (total === 0) {
-          this.setState({ status: Status.IDLE });
-          alert(
-            `There are nothing for "${searchName}". Try again with another name`
-          );
-          return;
-        }
-
-        if (!imageGallery.length) {
-          this.setState({
-            imageGallery: hits,
-            status: Status.RESOLVED,
-            totalImages: total,
-          });
-          return;
-        }
-
-        if (imageGallery.length) {
-          this.setState({
-            imageGallery: [...prevState.imageGallery, ...hits],
-            status: Status.RESOLVED,
-            totalImages: total,
-          });
-          return;
-        }
-      } catch (error) {
-        this.setState({ error, status: Status.REJECTED });
         return;
       }
+
+      if (!imageGallery.length) {
+        setImageGallery(hits);
+        setStatus(Status.RESOLVED);
+        setTotalImages(total);
+        return;
+      }
+
+      if (imageGallery.length) {
+        setImageGallery(prevState => [...prevState, ...hits]);
+        setStatus(Status.RESOLVED);
+        setTotalImages(total);
+        return;
+      }
+    } catch (error) {
+      setError(Status.REJECTED);
+      return;
     }
   }
 
-  loadMorePage = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const loadMorePage = () => {
+    setPage(prevState => prevState + 1);
   };
 
-  onSubmitForm = searchName => {
-    this.setState({ searchName, imageGallery: [], page: 1 });
+  const changePage = () => {
+    setPage(1);
   };
 
-  openModal = e => {
-    const largeImg = e.target.dataset.url;
-    const largeImgAlt = e.target.alt;
-    this.setState({ largeImg, largeImgAlt });
+  const onSubmitForm = searchName => {
+    setSearchName(searchName);
+    setImageGallery([]);
   };
 
-  closeModal = () => {
-    this.setState({ largeImg: null });
+  const openModal = e => {
+    setLargeImg(e.target.dataset.url);
+    setLargeImgAlt(e.target.alt);
   };
 
-  render() {
-    const {
-      searchName,
-      imageGallery,
-      status,
-      page,
-      perPage,
-      totalImages,
-      largeImg,
-      largeImgAlt,
-      error,
-    } = this.state;
+  const closeModal = () => {
+    setLargeImg(null);
+  };
 
-    const visibleButton = totalImages > page * perPage && status === 'resolved';
+  const visibleButton = totalImages > page * perPage && status === 'resolved';
 
-    return (
-      <>
-        <Searchbar onSubmit={this.onSubmitForm} prevSearchName={searchName} />
-        <ImageGallery>
-          {imageGallery && (
-            <ImageGalleryItem
-              imageGallery={imageGallery}
-              onClick={this.openModal}
-            />
-          )}
-        </ImageGallery>
+  return (
+    <>
+      <Searchbar
+        onSubmit={onSubmitForm}
+        prevSearchName={searchName}
+        changePage={changePage}
+      />
 
-        {status === 'pending' && <Loader />}
-
-        {visibleButton && <Button onClick={this.loadMorePage} />}
-
-        {largeImg && (
-          <Modal
-            url={largeImg}
-            alt={largeImgAlt}
-            onCloseModal={this.closeModal}
-          />
+      <ImageGallery>
+        {imageGallery && (
+          <ImageGalleryItem imageGallery={imageGallery} onClick={openModal} />
         )}
+      </ImageGallery>
 
-        {status === 'rejected' && <ErrorViewMessage onError={error} />}
-      </>
-    );
-  }
-}
+      {status === 'pending' && <Loader />}
+
+      {visibleButton && <Button onClick={loadMorePage} />}
+
+      {largeImg && (
+        <Modal url={largeImg} alt={largeImgAlt} closeModal={closeModal} />
+      )}
+
+      {status === 'rejected' && <ErrorViewMessage onError={error} />}
+    </>
+  );
+};
