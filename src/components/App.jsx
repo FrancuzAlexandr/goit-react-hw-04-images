@@ -32,7 +32,6 @@ export const App = () => {
     if (!searchName) {
       return;
     }
-
     setStatus(Status.PENDING);
     fetch();
   }, [searchName, page]);
