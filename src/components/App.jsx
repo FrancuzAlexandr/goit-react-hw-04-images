@@ -34,6 +34,7 @@ export const App = () => {
     }
     setStatus(Status.PENDING);
     fetch();
+    // eslint-disable-next-line
   }, [searchName, page]);
 
   async function fetch() {
