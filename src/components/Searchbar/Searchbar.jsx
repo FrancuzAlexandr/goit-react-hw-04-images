@@ -3,7 +3,7 @@ import { ImSearch } from 'react-icons/im';
 import PropTypes from 'prop-types';
 import css from './Searchbar.module.css';
 
-export const Searchbar = ({ prevSearchName, onSubmit, changePage }) => {
+export const Searchbar = ({ prevSearchName, onSubmit }) => {
   const [query, setQuery] = useState('');
 
   const handleSubmit = event => {
@@ -17,7 +17,6 @@ export const Searchbar = ({ prevSearchName, onSubmit, changePage }) => {
     }
 
     onSubmit(query);
-    changePage();
     setQuery('');
   };
 
